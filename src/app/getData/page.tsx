@@ -434,9 +434,9 @@ export default function Home() {
 
       <Card className="overflow-hidden mb-8">
         <CardHeader>
-          <CardTitle>Total Comments per Channel</CardTitle>
+          <CardTitle>Pie Chart per Channel</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-row">
           <ChartContainer
             config={{
               totalComments: {
@@ -494,14 +494,6 @@ export default function Home() {
               </Pie>
             </PieChart>
           </ChartContainer>
-        </CardContent>
-      </Card>
-
-      <Card className="overflow-hidden mb-8">
-        <CardHeader>
-          <CardTitle>Total Likes per Channel</CardTitle>
-        </CardHeader>
-        <CardContent>
           <ChartContainer
             config={{
               totalLikes: {
@@ -559,14 +551,7 @@ export default function Home() {
               </Pie>
             </PieChart>
           </ChartContainer>
-        </CardContent>
-      </Card>
 
-      <Card className="overflow-hidden mb-8">
-        <CardHeader>
-          <CardTitle>Total Views per Channel</CardTitle>
-        </CardHeader>
-        <CardContent>
           <ChartContainer
             config={{
               totalViews: {
