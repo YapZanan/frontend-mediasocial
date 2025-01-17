@@ -7,6 +7,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -20,9 +21,29 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Eye, ThumbsUp, MessageCircle, Clock, Video } from "lucide-react";
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
-import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
+import {
+  Eye,
+  ThumbsUp,
+  MessageCircle,
+  Clock,
+  Video,
+  TrendingUp,
+} from "lucide-react";
+import {
+  Bar,
+  BarChart,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  Pie,
+  PieChart,
+  Label,
+} from "recharts";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 
 export default function Home() {
   const [url, setUrl] = useState("");
@@ -100,7 +121,7 @@ export default function Home() {
   const getChartData = (dataKey, combinedData, limit = 5) => {
     if (!combinedData) return [];
     return combinedData.videos
-      .sort((a, b) => parseInt(b[dataKey]) - parseInt(a[dataKey])) // This sorting is only for chart data
+      .sort((a, b) => parseInt(b[dataKey]) - parseInt(a[dataKey]))
       .slice(0, limit)
       .map((video) => ({
         title:
@@ -110,6 +131,63 @@ export default function Home() {
         fullTitle: video.title,
         [dataKey]: parseInt(video[dataKey]) || 0,
       }));
+  };
+
+  const getPieChartDataView = () => {
+    return accounts.map((account) => {
+      const totalViews = account.data
+        ? account.data.videos.reduce((sum, video) => {
+            const viewCount = parseInt(video.viewCount, 10);
+            return sum + (isNaN(viewCount) ? 0 : viewCount);
+          }, 0)
+        : 0;
+
+      console.log(`Total views for ${account.url}: ${totalViews}`);
+
+      return {
+        name: account.url,
+        totalViews: totalViews,
+        fill: `hsl(${Math.random() * 360}, 70%, 50%)`,
+      };
+    });
+  };
+
+  const getPieChartDataLike = () => {
+    return accounts.map((account) => {
+      const totalLikes = account.data
+        ? account.data.videos.reduce((sum, video) => {
+            const likeCount = parseInt(video.likeCount, 10);
+            return sum + (isNaN(likeCount) ? 0 : likeCount);
+          }, 0)
+        : 0;
+
+      console.log(`Total likes for ${account.url}: ${totalLikes}`);
+
+      return {
+        name: account.url,
+        totalLikes: totalLikes,
+        fill: `hsl(${Math.random() * 360}, 70%, 50%)`,
+      };
+    });
+  };
+
+  const getPieChartDataComment = () => {
+    return accounts.map((account) => {
+      const totalComment = account.data
+        ? account.data.videos.reduce((sum, video) => {
+            const commentCount = parseInt(video.commentCount, 10);
+            return sum + (isNaN(commentCount) ? 0 : commentCount);
+          }, 0)
+        : 0;
+
+      console.log(`Total views for ${account.url}: ${totalComment}`);
+
+      return {
+        name: account.url,
+        totalComment: totalComment,
+        fill: `hsl(${Math.random() * 360}, 70%, 50%)`,
+      };
+    });
   };
 
   const combinedData = combineData();
@@ -354,6 +432,201 @@ export default function Home() {
         </Card>
       </div>
 
+      <Card className="overflow-hidden mb-8">
+        <CardHeader>
+          <CardTitle>Total Comments per Channel</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ChartContainer
+            config={{
+              totalComments: {
+                label: "Total Comments",
+              },
+            }}
+            className="mx-auto aspect-square max-h-[300px]"
+          >
+            <PieChart>
+              <ChartTooltip
+                cursor={false}
+                content={<ChartTooltipContent hideLabel />}
+              />
+              <Pie
+                data={getPieChartDataComment()}
+                dataKey="totalComment"
+                nameKey="name"
+                innerRadius={60}
+                strokeWidth={5}
+              >
+                <Label
+                  content={({ viewBox }) => {
+                    const totalComments = getPieChartDataComment().reduce(
+                      (acc, curr) => acc + curr.totalComment,
+                      0
+                    );
+                    if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                      return (
+                        <text
+                          x={viewBox.cx}
+                          y={viewBox.cy}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                        >
+                          <tspan
+                            x={viewBox.cx}
+                            y={viewBox.cy}
+                            className="fill-foreground text-3xl font-bold"
+                          >
+                            {formatNumber(totalComments)}
+                          </tspan>
+                          <tspan
+                            x={viewBox.cx}
+                            y={(viewBox.cy || 0) + 24}
+                            className="fill-muted-foreground"
+                          >
+                            Total Comments
+                          </tspan>
+                        </text>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+              </Pie>
+            </PieChart>
+          </ChartContainer>
+        </CardContent>
+      </Card>
+
+      <Card className="overflow-hidden mb-8">
+        <CardHeader>
+          <CardTitle>Total Likes per Channel</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ChartContainer
+            config={{
+              totalLikes: {
+                label: "Total Likes",
+              },
+            }}
+            className="mx-auto aspect-square max-h-[300px]"
+          >
+            <PieChart>
+              <ChartTooltip
+                cursor={false}
+                content={<ChartTooltipContent hideLabel />}
+              />
+              <Pie
+                data={getPieChartDataLike()}
+                dataKey="totalLikes"
+                nameKey="name"
+                innerRadius={60}
+                strokeWidth={5}
+              >
+                <Label
+                  content={({ viewBox }) => {
+                    const totalLikes = getPieChartDataLike().reduce(
+                      (acc, curr) => acc + curr.totalLikes,
+                      0
+                    );
+                    if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                      return (
+                        <text
+                          x={viewBox.cx}
+                          y={viewBox.cy}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                        >
+                          <tspan
+                            x={viewBox.cx}
+                            y={viewBox.cy}
+                            className="fill-foreground text-3xl font-bold"
+                          >
+                            {formatNumber(totalLikes)}
+                          </tspan>
+                          <tspan
+                            x={viewBox.cx}
+                            y={(viewBox.cy || 0) + 24}
+                            className="fill-muted-foreground"
+                          >
+                            Total Likes
+                          </tspan>
+                        </text>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+              </Pie>
+            </PieChart>
+          </ChartContainer>
+        </CardContent>
+      </Card>
+
+      <Card className="overflow-hidden mb-8">
+        <CardHeader>
+          <CardTitle>Total Views per Channel</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ChartContainer
+            config={{
+              totalViews: {
+                label: "Total Views",
+              },
+            }}
+            className="mx-auto aspect-square max-h-[300px]"
+          >
+            <PieChart>
+              <ChartTooltip
+                cursor={false}
+                content={<ChartTooltipContent hideLabel />}
+              />
+              <Pie
+                data={getPieChartDataView()}
+                dataKey="totalViews"
+                nameKey="name"
+                innerRadius={60}
+                strokeWidth={5}
+              >
+                <Label
+                  content={({ viewBox }) => {
+                    const totalViews = getPieChartDataView().reduce(
+                      (acc, curr) => acc + curr.totalViews,
+                      0
+                    );
+                    if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                      return (
+                        <text
+                          x={viewBox.cx}
+                          y={viewBox.cy}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                        >
+                          <tspan
+                            x={viewBox.cx}
+                            y={viewBox.cy}
+                            className="fill-foreground text-3xl font-bold"
+                          >
+                            {formatNumber(totalViews)}
+                          </tspan>
+                          <tspan
+                            x={viewBox.cx}
+                            y={(viewBox.cy || 0) + 24}
+                            className="fill-muted-foreground"
+                          >
+                            Total Views
+                          </tspan>
+                        </text>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+              </Pie>
+            </PieChart>
+          </ChartContainer>
+        </CardContent>
+      </Card>
+
       <Card className="mb-8">
         <CardHeader>
           <CardTitle>All Videos (Combined)</CardTitle>
@@ -364,7 +637,7 @@ export default function Home() {
               <TableRow>
                 <TableHead>Thumbnail</TableHead>
                 <TableHead>Title</TableHead>
-                <TableHead>Username</TableHead> {/* New column for Username */}
+                <TableHead>Username</TableHead>
                 <TableHead>Views</TableHead>
                 <TableHead>Likes</TableHead>
                 <TableHead>Comments</TableHead>
