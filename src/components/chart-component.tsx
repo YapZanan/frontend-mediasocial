@@ -1,12 +1,12 @@
 "use client";
 
-import { Bar, BarChart, XAxis, YAxis, Legend, CartesianGrid } from "recharts";
-import { TrendingUp } from "lucide-react";
+import { FaSearch, FaInstagram, FaTiktok, FaYoutube } from "react-icons/fa";
+import { Bar, BarChart, XAxis, Legend, CartesianGrid } from "recharts";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -17,86 +17,128 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 
-// Get today's date
-const today = new Date().toLocaleDateString("en-US", {
-  year: "numeric",
-  month: "long",
-  day: "numeric",
-});
-
-const chartData = [
-  { name: "Alice", views: 2500, likes: 150, comments: 50 },
-  { name: "Bob", views: 3800, likes: 200, comments: 80 },
-  { name: "Charlie", views: 5200, likes: 300, comments: 120 },
-  { name: "Dave", views: 1400, likes: 90, comments: 30 },
-  { name: "Eve", views: 6000, likes: 400, comments: 150 },
-  { name: "Frank", views: 4800, likes: 250, comments: 100 },
-];
-
 const chartConfig = {
-  views: {
-    label: "Views",
+  followersCount: {
+    label: "Followers",
     color: "hsl(var(--chart-1))",
   },
-  likes: {
-    label: "Likes",
+  viewsCount: {
+    label: "Views",
     color: "hsl(var(--chart-2))",
   },
-  comments: {
-    label: "Comments",
+  totalLikes: {
+    label: "Likes",
     color: "hsl(var(--chart-3))",
+  },
+  totalComments: {
+    label: "Comments",
+    color: "hsl(var(--chart-4))",
   },
 } satisfies ChartConfig;
 
 export function ChartComponent() {
-  return (
-    <ChartContainer config={chartConfig} className="h-full text-white">
-      <BarChart
-        accessibilityLayer
-        data={chartData}
-        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-        barCategoryGap="10%"
-      >
-        <CartesianGrid vertical={false} />
-        <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+  const [originalData, setOriginalData] = useState([]);
+  const [chartData, setChartData] = useState([]);
+  const [activeTab, setActiveTab] = useState("followersCount");
 
-        <XAxis
-          dataKey="name"
-          tickLine={false}
-          tickMargin={10}
-          axisLine={false}
-          tickFormatter={(value) => value.slice(0, 3)}
-          aria-label="Name Axis"
-        />
-        {/* <YAxis aria-label="Value Axis" /> */}
-        <Legend />
-        <Bar
-          dataKey="views"
-          fill="var(--color-views)"
-          name="Views"
-          radius={[4, 4, 0, 0]}
-        />
-        <Bar
-          dataKey="likes"
-          fill="var(--color-likes)"
-          name="Likes"
-          radius={[4, 4, 0, 0]}
-        />
-        <Bar
-          dataKey="comments"
-          fill="var(--color-comments)"
-          name="Comments"
-          radius={[4, 4, 0, 0]}
-        />
-        <ChartTooltip
-          content={
-            <ChartTooltipContent labelFormatter={(value) => `Name: ${value}`} />
-            // <ChartTooltipContent hideLabel />
-          }
-          cursor={false}
-          defaultIndex={1}
-        />
-      </BarChart>
-    </ChartContainer>
+  useEffect(() => {
+    fetch("https://mediasocial-backend.yapzanan.workers.dev/statistics")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        console.log("Fetched Data:", data); // Debugging line
+        const transformedData = data.data.map((channel) => ({
+          name: channel.channelName,
+          followersCount: channel.followersCount / 1000000, // Normalize to millions
+          viewsCount: channel.viewsCount / 1000000, // Normalize to millions
+          totalLikes: channel.totalLikes / 1000000, // Normalize to millions
+          totalComments: channel.totalComments / 1000000, // Normalize to millions
+        }));
+        setOriginalData(transformedData);
+        sortData(transformedData, activeTab);
+      })
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+      });
+  }, []);
+
+  useEffect(() => {
+    sortData(originalData, activeTab);
+  }, [activeTab]);
+
+  const sortData = (data, tab) => {
+    const sortedData = [...data].sort((a, b) => b[tab] - a[tab]);
+    const top5Data = sortedData.slice(0, 5);
+    setChartData(top5Data);
+  };
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+  };
+
+  return (
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>Channel Statistics</CardTitle>
+      </CardHeader>
+      <CardContent className="">
+        <div className="flex space-x-4 mb-4">
+          {Object.keys(chartConfig).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => handleTabChange(tab)}
+              className={`px-4 py-2 rounded-md ${
+                activeTab === tab
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {chartConfig[tab].label}
+            </button>
+          ))}
+        </div>
+        <div className="items-center flex justify-center">
+          <ChartContainer config={chartConfig} className="w-3/4">
+            <BarChart
+              accessibilityLayer
+              data={chartData}
+              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              barCategoryGap="10%"
+            >
+              <CartesianGrid vertical={false} />
+              <XAxis
+                dataKey="name"
+                tickLine={false}
+                tickMargin={10}
+                axisLine={false}
+                tickFormatter={(value) => value.slice(0, 3)}
+                aria-label="Name Axis"
+              />
+              <Legend formatter={(value) => `${value} (in millions)`} />
+              <Bar
+                dataKey={activeTab}
+                fill={chartConfig[activeTab].color}
+                name={chartConfig[activeTab].label}
+                radius={[8, 8, 8, 8]}
+              />
+              <ChartTooltip
+                content={
+                  <ChartTooltipContent
+                    labelFormatter={(value) => `${value}`}
+                    formatter={(value) => `${value.toFixed(2)}M`} // Display values in millions
+                  />
+                }
+                cursor={false}
+                defaultIndex={1}
+              />
+            </BarChart>
+          </ChartContainer>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
