@@ -15,6 +15,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { GoPlus } from "react-icons/go";
+import { Button } from "@/components/ui/button";
 
 interface Video {
   id: string;
@@ -35,6 +37,66 @@ interface VideoStatistics {
   recordedAt: string;
 }
 
+const AddVideoCard = ({ onClose }) => {
+  const [url, setUrl] = useState("");
+
+  const handleAdd = async () => {
+    try {
+      // Call the API with the provided URL
+      const response = await fetch(
+        `https://mediasocial-backend.yapzanan.workers.dev/?url=${encodeURIComponent(
+          url
+        )}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch data from the API");
+      }
+
+      const result = await response.json();
+      console.log("API Response:", result);
+
+      // Close the card
+      onClose();
+
+      // Refresh the page
+      window.location.reload();
+    } catch (error) {
+      console.error("Error calling the API:", error);
+      alert("Failed to add the URL. Please try again.");
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+      <div className="bg-white p-6 rounded-lg max-w-md w-full">
+        <h2 className="text-xl font-bold mb-4">Add Video URL</h2>
+        <input
+          type="text"
+          placeholder="Enter video URL..."
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded mb-4"
+        />
+        <div className="flex justify-end space-x-2">
+          <button
+            className="bg-gray-500 text-white px-4 py-2 rounded"
+            onClick={onClose}
+          >
+            Cancel
+          </button>
+          <button
+            className="bg-blue-500 text-white px-4 py-2 rounded"
+            onClick={handleAdd}
+          >
+            Add
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function Youtube() {
   const [data, setData] = useState<Video[]>([]);
   const [page, setPage] = useState(1);
@@ -48,6 +110,7 @@ export default function Youtube() {
   >("likes");
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredData, setFilteredData] = useState<Video[]>([]);
+  const [isCardVisible, setIsCardVisible] = useState(false);
   const limit = 20;
 
   const loadMoreData = async () => {
@@ -135,7 +198,17 @@ export default function Youtube() {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">YouTube Videos</h1>
+      <div className="flex flex-row justify-between px-8">
+        <h1 className="text-2xl font-bold mb-4">YouTube Videos</h1>
+
+        <div className="flex space-x-4 items-center">
+          <IconButton
+            icon={<GoPlus />}
+            label="Add Item 1"
+            onClick={() => setIsCardVisible(true)}
+          />
+        </div>
+      </div>
 
       {/* Search Bar */}
       <div className="mb-4">
@@ -290,6 +363,34 @@ export default function Youtube() {
           No more videos to load.
         </div>
       )}
+
+      {/* Add Video Card */}
+      {isCardVisible && (
+        <AddVideoCard
+          onAdd={(url) => {
+            // Handle the URL addition logic here
+            console.log("Added URL:", url);
+          }}
+          onClose={() => setIsCardVisible(false)}
+        />
+      )}
     </div>
   );
 }
+
+interface IconButtonProps {
+  icon: React.ReactNode;
+  label: string;
+  onClick?: () => void;
+}
+const IconButton: React.FC<IconButtonProps> = ({ icon, label, onClick }) => {
+  return (
+    <Button
+      aria-label={label}
+      className="rounded-full w-14 h-14 flex items-center justify-center shadow-md hover:shadow-lg transition-shadow bg-primary-foreground hover:bg-primary-foreground/90"
+      onClick={onClick}
+    >
+      <span className="text-3xl text-primary">{icon}</span>
+    </Button>
+  );
+};
