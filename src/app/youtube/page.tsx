@@ -17,6 +17,7 @@ import {
 } from "recharts";
 import { GoPlus } from "react-icons/go";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface Video {
   id: string;
@@ -37,7 +38,7 @@ interface VideoStatistics {
   recordedAt: string;
 }
 
-const AddVideoCard = ({ onClose }) => {
+const AddVideoCard = ({ onClose, onAdd }) => {
   const [url, setUrl] = useState("");
 
   const handleAdd = async () => {
@@ -97,6 +98,97 @@ const AddVideoCard = ({ onClose }) => {
   );
 };
 
+const BatchImportCard = ({ onClose, onBatchImport }) => {
+  const [urls, setUrls] = useState("");
+  const [isLoading, setIsLoading] = useState(false); // Loading state
+
+  const extractUsername = (url) => {
+    // Extract the username from the URL
+    const match = url.match(/youtube\.com\/@([^/?]+)/);
+    if (match && match[1]) {
+      return `@${match[1]}`; // Ensure it starts with @
+    }
+    return null; // Return null if no match is found
+  };
+
+  const handleBatchImport = async () => {
+    const urlList = urls
+      .split("\n")
+      .map((url) => url.trim())
+      .map((url) => extractUsername(url)) // Extract usernames
+      .filter((username) => username !== null); // Filter out invalid entries
+
+    if (urlList.length === 0) {
+      alert("No valid YouTube channel usernames found.");
+      return;
+    }
+
+    setIsLoading(true); // Start loading
+
+    try {
+      for (const username of urlList) {
+        try {
+          // Construct the API URL with just the @username
+          const apiUrl = `https://mediasocial-backend.yapzanan.workers.dev/?url=${username}`;
+          const response = await fetch(apiUrl);
+
+          if (!response.ok) {
+            throw new Error(`Failed to fetch data for ${username}`);
+          }
+
+          const result = await response.json();
+          console.log("API Response for", username, ":", result);
+        } catch (error) {
+          console.error("Error processing", username, ":", error);
+          // Skip this username and continue with the next one
+        }
+      }
+      onClose();
+      window.location.reload();
+    } catch (error) {
+      console.error("Error during batch import:", error);
+      alert("Failed to batch import. Please try again.");
+    } finally {
+      setIsLoading(false); // Stop loading
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+      <div className="bg-white p-6 rounded-lg max-w-md w-full">
+        <h2 className="text-xl font-bold mb-4">
+          Batch Import YouTube Channels
+        </h2>
+        <textarea
+          placeholder="Enter YouTube channel URLs (one per line)..."
+          value={urls}
+          onChange={(e) => setUrls(e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded mb-4 h-32"
+          disabled={isLoading} // Disable textarea while loading
+        />
+        <div className="flex justify-end space-x-2">
+          <Button
+            variant="secondary"
+            onClick={onClose}
+            disabled={isLoading} // Disable cancel button while loading
+          >
+            Cancel
+          </Button>
+          <Button onClick={handleBatchImport} disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Importing...
+              </>
+            ) : (
+              "Import"
+            )}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function Youtube() {
   const [data, setData] = useState<Video[]>([]);
   const [page, setPage] = useState(1);
@@ -111,6 +203,7 @@ export default function Youtube() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredData, setFilteredData] = useState<Video[]>([]);
   const [isCardVisible, setIsCardVisible] = useState(false);
+  const [isBatchImportVisible, setIsBatchImportVisible] = useState(false);
   const limit = 20;
 
   const loadMoreData = async () => {
@@ -194,6 +287,26 @@ export default function Youtube() {
     handleCardClick(videoId);
   };
 
+  const handleBatchImport = async (username: string) => {
+    try {
+      const response = await fetch(
+        `https://mediasocial-backend.yapzanan.workers.dev/?url=${encodeURIComponent(
+          `https://www.youtube.com/${username}`
+        )}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch data from the API");
+      }
+
+      const result = await response.json();
+      console.log("API Response:", result);
+    } catch (error) {
+      console.error("Error calling the API:", error);
+      throw error;
+    }
+  };
+
   const videosToDisplay = searchQuery ? filteredData : data;
 
   return (
@@ -204,9 +317,15 @@ export default function Youtube() {
         <div className="flex space-x-4 items-center">
           <IconButton
             icon={<GoPlus />}
-            label="Add Item 1"
+            label="Add Item"
             onClick={() => setIsCardVisible(true)}
           />
+          <Button
+            className="bg-green-500 text-white px-4 py-2 rounded"
+            onClick={() => setIsBatchImportVisible(true)}
+          >
+            Batch Import
+          </Button>
         </div>
       </div>
 
@@ -372,6 +491,14 @@ export default function Youtube() {
             console.log("Added URL:", url);
           }}
           onClose={() => setIsCardVisible(false)}
+        />
+      )}
+
+      {/* Batch Import Card */}
+      {isBatchImportVisible && (
+        <BatchImportCard
+          onBatchImport={handleBatchImport}
+          onClose={() => setIsBatchImportVisible(false)}
         />
       )}
     </div>
