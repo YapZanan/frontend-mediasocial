@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { LineComponent } from "@/components/line-chart";
 
 export default function Home() {
   const router = useRouter();
@@ -286,18 +287,23 @@ export default function Home() {
           </div>
 
           {/* Item 6 */}
-          <div className="col-span-5 row-span-3 col-start-7 row-start-10 h-full bg-red-500 text-white rounded-3xl shadow-lg flex items-center justify-center p-6">
-            <h2 className="text-2xl font-bold">Item 6</h2>
+          <div className="col-span-5 row-span-3 col-start-7 row-start-10 h-full text-white rounded-3xl shadow-lg flex items-center justify">
+            <LineComponent />
           </div>
 
           {/* Item 7 */}
-          <div className="col-span-3 row-span-5 col-start-4 row-start-4 h-full bg-teal-500 text-white rounded-3xl shadow-lg flex items-center justify-center p-6">
-            <h2 className="text-2xl font-bold">Item 7</h2>
+          <div className="col-span-3 row-span-5 col-start-4 row-start-4 h-full bg-background text-white rounded-3xl shadow-lg flex items-center justify-center p-6">
+            {/* <h2 className="text-2xl font-bold">Item 7</h2> */}
           </div>
 
           {/* Item 8 */}
-          <div className="col-span-2 col-start-10 row-start-3 h-full bg-orange-500 text-white rounded-3xl shadow-lg flex items-center justify-center p-6">
-            <h2 className="text-2xl font-bold">Item 8</h2>
+          <div className="col-span-2 col-start-10 row-start-3 h-full bg-orange-500 text-white rounded-3xl shadow-lg flex items-center justify-center">
+            <Button
+              className="text-2xl font-bold h-full w-full bg-accent-foreground rounded-3xl"
+              onClick={() => router.push("/youtube")}
+            >
+              Buka Timeline
+            </Button>
           </div>
         </div>
       </div>

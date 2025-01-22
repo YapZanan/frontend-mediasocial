@@ -53,10 +53,10 @@ export function ChartComponent() {
         console.log("Fetched Data:", data); // Debugging line
         const transformedData = data.data.map((channel) => ({
           name: channel.channelName,
-          followersCount: channel.followersCount / 1000000, // Normalize to millions
-          viewsCount: channel.viewsCount / 1000000, // Normalize to millions
-          totalLikes: channel.totalLikes / 1000000, // Normalize to millions
-          totalComments: channel.totalComments / 1000000, // Normalize to millions
+          followersCount: channel.followersCount / 1000, // Normalize to millions
+          viewsCount: channel.viewsCount / 1000, // Normalize to millions
+          totalLikes: channel.totalLikes / 1000, // Normalize to millions
+          totalComments: channel.totalComments / 1000, // Normalize to millions
         }));
         setOriginalData(transformedData);
         sortData(transformedData, activeTab);
@@ -118,7 +118,7 @@ export function ChartComponent() {
                 tickFormatter={(value) => value.slice(0, 3)}
                 aria-label="Name Axis"
               />
-              <Legend formatter={(value) => `${value} (in millions)`} />
+              <Legend formatter={(value) => `${value} (in thousand)`} />
               <Bar
                 dataKey={activeTab}
                 fill={chartConfig[activeTab].color}
@@ -129,7 +129,7 @@ export function ChartComponent() {
                 content={
                   <ChartTooltipContent
                     labelFormatter={(value) => `${value}`}
-                    formatter={(value) => `${value.toFixed(2)}M`} // Display values in millions
+                    formatter={(value) => `${value.toFixed(2)}K`} // Display values in millions
                   />
                 }
                 cursor={false}
