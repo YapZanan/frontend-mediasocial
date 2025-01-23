@@ -26,3 +26,11 @@ export const fetchVideos = async (page: number, limit: number): Promise<AllVideo
     const result = await response.json();
     return result.data;
 };
+
+export const fetchVideosSpecific = async (userGroup: string, page: number, limit: number): Promise<AllVideoResponse> => {
+    const response = await fetch(
+        `https://mediasocial-backend.yapzanan.workers.dev/videos-by-usergroup/${userGroup}?page=${page}&limit=${limit}`
+    );
+    const result = await response.json();
+    return result.data;
+};

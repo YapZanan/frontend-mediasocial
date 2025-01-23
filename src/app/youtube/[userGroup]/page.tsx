@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import useInfiniteScroll from "@/hooks/useInfiniteScroll";
-import { fetchVideos } from "@/utils/fetchVideos";
+import { fetchVideos, fetchVideosSpecific } from "@/utils/fetchVideos";
 import {
   LineChart,
   Line,
@@ -18,6 +18,7 @@ import {
 import { GoPlus } from "react-icons/go";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/router";
 
 interface Video {
   id: string;
@@ -207,7 +208,9 @@ const formatDateToLocal = (dateString, timezone) => {
   });
 };
 
-export default function Youtube() {
+export default function Youtube({ params }) {
+  console.log("test", params.userGroup);
+  // const { userGroup } = router.query; // Access the dynamic userGroup parameter
   const [data, setData] = useState<Video[]>([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -235,7 +238,8 @@ export default function Youtube() {
     setLoading(true);
 
     try {
-      const result = await fetchVideos(page, limit);
+      const result = await fetchVideosSpecific(params.userGroup, page, limit);
+      console.log("asdasda", result);
       setData((prevData) => [...prevData, ...result.videos]);
       setPage((prevPage) => prevPage + 1);
 

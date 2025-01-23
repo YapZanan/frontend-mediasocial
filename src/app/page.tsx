@@ -15,6 +15,15 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { LineComponent } from "@/components/line-chart";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 export default function Home() {
   const router = useRouter();
@@ -23,8 +32,49 @@ export default function Home() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"comments" | "likes">("comments");
+  const [userGroups, setUserGroups] = useState([]);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [userGroup, setUserGroup] = useState("");
+  const [youtubeLinks, setYoutubeLinks] = useState([""]); // Start with one empty link
+
+  const handleAddLink = () => {
+    setYoutubeLinks([...youtubeLinks, ""]); // Add a new empty link
+  };
+
+  const handleLinkChange = (index: number, value: string) => {
+    const newLinks = [...youtubeLinks];
+    newLinks[index] = value;
+    setYoutubeLinks(newLinks);
+  };
+
+  const handleSubmit = async () => {
+    for (const link of youtubeLinks) {
+      if (link.trim() === "") continue; // Skip empty links
+
+      const apiUrl = `https://mediasocial-backend.yapzanan.workers.dev/?url=${encodeURIComponent(
+        link
+      )}&userGroup=${encodeURIComponent(userGroup)}`;
+
+      try {
+        const response = await fetch(apiUrl);
+        if (!response.ok) {
+          console.error(`Skipping link: ${link} (Status: ${response.status})`);
+          continue; // Skip if the response is not 200 OK
+        }
+        const data = await response.json();
+        console.log("API Response:", data);
+      } catch (error) {
+        console.error("Error submitting link:", error);
+      }
+    }
+
+    // Refresh the page after all links are submitted
+    window.location.reload();
+  };
 
   // Fetch YouTube channel count
+  // Fetch YouTube channel count and userGroup
   useEffect(() => {
     fetch("https://mediasocial-backend.yapzanan.workers.dev/channels")
       .then((response) => {
@@ -36,9 +86,19 @@ export default function Home() {
       .then((data) => {
         // Count the number of channels
         setYoutubeChannelCount(data.data.length);
+
+        // Extract all unique userGroup values from the channels
+        const uniqueUserGroups = [
+          ...new Set(data.data.map((channel) => channel.userGroup)),
+        ];
+        console.log(uniqueUserGroups);
+        setUserGroups(uniqueUserGroups);
       })
       .catch((error) => {
         console.error("Error fetching YouTube channels:", error);
+      })
+      .finally(() => {
+        setLoading(false);
       });
   }, []);
 
@@ -66,6 +126,10 @@ export default function Home() {
     );
   }
 
+  const handleButtonClick = (userGroup) => {
+    router.push(`/youtube/${userGroup}`); // Navigate to /youtube/userGroup
+  };
+
   return (
     <div className="w-full flex flex-col min-h-screen pb-4 gap-4 bg-background">
       {/* Header */}
@@ -82,11 +146,53 @@ export default function Home() {
         </div>
         {/* Action Buttons */}
         <div className="flex space-x-4 items-center">
-          <IconButton
-            icon={<GoPlus />}
-            label="Add Item 1"
-            onClick={() => router.push("/getData")}
-          />
+          <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+            <DialogTrigger asChild>
+              <IconButton
+                icon={<GoPlus />}
+                label="Add Item 1"
+                onClick={() => setIsModalOpen(true)}
+              />
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add YouTube Channels</DialogTitle>
+                <DialogDescription>
+                  Enter the user group and YouTube channel links to batch
+                  import.
+                </DialogDescription>
+              </DialogHeader>
+
+              {/* User Group Input */}
+              <Input
+                value={userGroup}
+                onChange={(e) => setUserGroup(e.target.value)}
+                placeholder="Enter user group..."
+                className="mb-4"
+              />
+
+              {/* YouTube Links Input */}
+              {youtubeLinks.map((link, index) => (
+                <div key={index} className="flex space-x-2 mb-2">
+                  <Input
+                    value={link}
+                    onChange={(e) => handleLinkChange(index, e.target.value)}
+                    placeholder="Enter YouTube channel link..."
+                  />
+                  {index === youtubeLinks.length - 1 && (
+                    <Button onClick={handleAddLink} variant="outline">
+                      <GoPlus />
+                    </Button>
+                  )}
+                </div>
+              ))}
+
+              {/* Submit Button */}
+              <div className="flex justify-end mt-4">
+                <Button onClick={handleSubmit}>Submit</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
           <IconButton icon={<GoDownload />} label="Add Item 2" />
           <IconButton icon={<MdPersonOutline />} label="Add Item 3" />
           <ModeToggle />
@@ -292,8 +398,24 @@ export default function Home() {
           </div>
 
           {/* Item 7 */}
-          <div className="col-span-3 row-span-5 col-start-4 row-start-4 h-full bg-background text-white rounded-3xl shadow-lg flex items-center justify-center p-6">
-            {/* <h2 className="text-2xl font-bold">Item 7</h2> */}
+          <div className="col-span-3 row-span-5 col-start-4 row-start-4 h-full bg-background text-black rounded-3xl shadow-lg flex items-start justify-center p-6">
+            <div className="mt-4 flex flex-col space-y-2 w-full">
+              {userGroups.map((group, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleButtonClick(group)}
+                  className={`px-4 py-2 rounded-lg ${
+                    group === 1
+                      ? "bg-blue-500 text-white"
+                      : group === 2
+                      ? "bg-green-500 text-white"
+                      : "bg-gray-500 text-white" // Default style for other groups
+                  }`}
+                >
+                  {group}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Item 8 */}
